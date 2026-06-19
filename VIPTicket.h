@@ -20,6 +20,7 @@ public:
     void setIncludesMeal(bool m);
 
     double calcFinalPrice() const override;
+    VIPTicket* clone() const override; // CHANGED: covariant clone for polymorphic Ticket copy
 };
 
 #endif

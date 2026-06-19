@@ -33,6 +33,7 @@ public:
     void addTicket(Ticket* t);
 
     void printDetails() const override;
+    virtual Guest* clone() const; // CHANGED: virtual clone needed for polymorphic copy in Cinema::operator=
 };
 
 #endif

@@ -17,6 +17,7 @@ public:
     void addClubPoints(int p);
 
     void printDetails() const override;
+    Customer* clone() const override; // CHANGED: covariant clone for polymorphic Guest copy
 };
 
 #endif

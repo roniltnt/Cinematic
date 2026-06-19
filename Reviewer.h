@@ -17,6 +17,7 @@ public:
     void setPublicationName(const char* name);
 
     void printDetails() const override;
+    Reviewer* clone() const override; // CHANGED: covariant clone for polymorphic Guest copy
 };
 
 #endif

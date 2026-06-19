@@ -25,6 +25,7 @@ public:
     virtual double calcFinalPrice() const;
 
     bool operator>(const Ticket& other) const;
+    virtual Ticket* clone() const; // CHANGED: virtual clone needed for polymorphic copy in Guest
 };
 
 #endif
