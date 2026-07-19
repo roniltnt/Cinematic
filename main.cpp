@@ -180,17 +180,18 @@ static void addGuestAction(Cinema& cinema) {
 
     char name[128];
     readString("  Name: ", name, sizeof(name));
-    int id     = readIntInRange("  ID: ", 1, 999999);
-    int visits = readIntInRange("  Visit count: ", 0, 9999);
+    int id = readIntInRange("  ID: ", 1, 999999);
+    // DEVIATION FROM ORIGINAL SPEC: visitCount not prompted; auto-initialized to 0 in constructor (Deviation 2)
 
     try {
         if (type == 1) {
-            int pts = readIntInRange("  Club points: ", 0, 999999);
-            cinema += new Customer(name, id, pts, visits);
+            // DEVIATION FROM ORIGINAL SPEC: clubPoints removed — Customer takes only name and id (Deviation 1)
+            cinema += new Customer(name, id);
         } else {
             char pub[128];
             readString("  Publication name: ", pub, sizeof(pub));
-            cinema += new Reviewer(name, id, pub, visits);
+            // DEVIATION FROM ORIGINAL SPEC: visitCount parameter removed from Reviewer constructor (Deviation 2)
+            cinema += new Reviewer(name, id, pub);
         }
         std::cout << "  Guest \"" << name << "\" added.\n";
     } catch (const std::exception& e) {
@@ -221,19 +222,10 @@ static void sellTicketAction(Cinema& cinema) {
     // DEVIATION FROM ORIGINAL SPEC: 1-based selection (Deviation 8)
     int gChoice = readIntInRange("  Select guest #: ", 1, cinema.getNumGuests()) - 1;
 
-    // DEVIATION FROM ORIGINAL SPEC: Ticket now references a Screening (Deviation 5)
-    bool is3D = false;
-    if (sc->getIs3DScreening())
-        is3D = readYesNo("  This is a 3D screening. Buy 3D ticket?");
-
-    std::cout << "  Ticket type: 1) Regular  2) VIP\n";
-    int  ttype       = readIntInRange("  Choice: ", 1, 2);
-    bool isVIP       = (ttype == 2);
-    bool includesMeal = false;
-    if (isVIP) includesMeal = readYesNo("  Include meal?");
-
+    // DEVIATION FROM ORIGINAL SPEC: ticket type (3D/VIP) auto-determined from hall/screening properties — no user prompt (Deviation 5)
+    // DEVIATION FROM ORIGINAL SPEC: VIP ticket only issued when the hall is a VIP Hall (Deviation 3)
     try {
-        cinema.sellTicket(scChoice, gChoice, is3D, isVIP, includesMeal);
+        cinema.sellTicket(scChoice, gChoice);
         std::cout << "  Ticket sold. Remaining seats: "
                   << cinema.getScreeningByIndex(scChoice)->getAvailableSeats() << '\n';
     } catch (const std::exception& e) {
@@ -305,6 +297,7 @@ static void deleteGuestAction(Cinema& cinema) {
 int main() {
     Cinema cinema;
 
+    // DEVIATION FROM ORIGINAL SPEC: Exit moved to option 0 instead of 14 (Deviation 4)
     const char* MENU =
         "\n========================================\n"
         "       Smart Cinema Management\n"
@@ -322,28 +315,31 @@ int main() {
         "11.  Promote Employee\n"
         "12.  Print All Guests\n"
         "13.  Delete Guest\n"
-        "14.  Exit\n"
+        "14.  Print All Employees\n"
+        " 0.  Exit\n"  // DEVIATION FROM ORIGINAL SPEC: was 14, now 0 (Deviation 4)
         "========================================\n";
 
     while (true) {
         std::cout << MENU;
-        int choice = readIntInRange("Choice: ", 1, 14);
+        // DEVIATION FROM ORIGINAL SPEC: range is 0-14; 0 = Exit (Deviation 4)
+        int choice = readIntInRange("Choice: ", 0, 14);
 
         switch (choice) {
-            case  1: addHallAction(cinema);                          break;
-            case  2: addMovieAction(cinema);                         break;
-            case  3: scheduleScreeningAction(cinema);                break;
-            case  4: addEmployeeAction(cinema);                      break;
-            case  5: addGuestAction(cinema);                         break;
-            case  6: sellTicketAction(cinema);                       break;
-            case  7: std::cout << '\n'; cinema.printAllMovies();     break;
-            case  8: std::cout << '\n'; cinema.printAllHalls();      break;
-            case  9: std::cout << '\n'; cinema.printAllScreenings(); break;
-            case 10: addShiftAction(cinema);                         break;
-            case 11: promoteEmployeeAction(cinema);                  break;
-            case 12: std::cout << '\n'; cinema.printAllGuests();     break;
-            case 13: deleteGuestAction(cinema);                      break;
-            case 14: std::cout << "Goodbye!\n"; return 0;
+            case  0: std::cout << "Goodbye!\n"; return 0; // DEVIATION FROM ORIGINAL SPEC: Exit is 0 (Deviation 4)
+            case  1: addHallAction(cinema);                             break;
+            case  2: addMovieAction(cinema);                            break;
+            case  3: scheduleScreeningAction(cinema);                   break;
+            case  4: addEmployeeAction(cinema);                         break;
+            case  5: addGuestAction(cinema);                            break;
+            case  6: sellTicketAction(cinema);                          break;
+            case  7: std::cout << '\n'; cinema.printAllMovies();        break;
+            case  8: std::cout << '\n'; cinema.printAllHalls();         break;
+            case  9: std::cout << '\n'; cinema.printAllScreenings();    break;
+            case 10: addShiftAction(cinema);                            break;
+            case 11: promoteEmployeeAction(cinema);                     break;
+            case 12: std::cout << '\n'; cinema.printAllGuests();        break;
+            case 13: deleteGuestAction(cinema);                         break;
+            case 14: std::cout << '\n'; cinema.printAllEmployees();     break;
         }
     }
 }

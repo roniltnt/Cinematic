@@ -3,8 +3,9 @@
 #include <cstring>
 #include <stdexcept>
 
-Reviewer::Reviewer(const char* name, int id, const char* publicationName, int visitCount)
-    : Guest(name, id, visitCount) {
+// DEVIATION FROM ORIGINAL SPEC: visitCount parameter removed; Guest auto-initializes to 0 (Deviation 2)
+Reviewer::Reviewer(const char* name, int id, const char* publicationName)
+    : Guest(name, id) {
     if (!publicationName) throw std::invalid_argument("Publication name cannot be null.");
     this->publicationName = new char[strlen(publicationName) + 1];
     strcpy(this->publicationName, publicationName);

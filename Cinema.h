@@ -88,8 +88,9 @@ public:
     void scheduleScreening(int movieIdx, int hallIdx, const Date& date,
                            int startHour, int startMinute, bool is3DScreening);
 
-    // DEVIATION FROM ORIGINAL SPEC: sells ticket for a specific Screening (Deviation 5, 6)
-    void sellTicket(int screeningIdx, int guestIdx, bool is3D, bool isVIP, bool includesMeal);
+    // DEVIATION FROM ORIGINAL SPEC: ticket type auto-determined from Screening/Hall — no bool params (Deviations 3, 5)
+    // DEVIATION FROM ORIGINAL SPEC: VIP ticket only allowed when Hall is a VIP Hall (Deviation 3)
+    void sellTicket(int screeningIdx, int guestIdx);
 
     void printAllGuests()     const;
     void printAllEmployees()  const;

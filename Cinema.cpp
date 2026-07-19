@@ -258,15 +258,24 @@ void Cinema::scheduleScreening(int movieIdx, int hallIdx, const Date& date,
 }
 
 // ============================================================
-//  DEVIATION FROM ORIGINAL SPEC: sell ticket for a specific Screening (Deviations 5, 6)
+//  DEVIATION FROM ORIGINAL SPEC: ticket type auto-determined from Screening/Hall (Deviations 3, 5)
+//  DEVIATION FROM ORIGINAL SPEC: VIP ticket only generated when Hall is a VIP Hall (Deviation 3)
 // ============================================================
-void Cinema::sellTicket(int screeningIdx, int guestIdx, bool is3D, bool isVIP, bool includesMeal) {
+void Cinema::sellTicket(int screeningIdx, int guestIdx) {
     Screening* sc = getScreeningByIndex(screeningIdx);
     if (sc->getAvailableSeats() == 0)
         throw std::runtime_error("No seats available for this screening.");
 
+    // DEVIATION FROM ORIGINAL SPEC: is3D derived from the Screening's flag, not user input (Deviation 5)
+    bool is3D  = sc->getIs3DScreening();
+
+    // DEVIATION FROM ORIGINAL SPEC: isVIP derived from whether the Hall has waiters (i.e. is a VIP Hall) (Deviations 3, 5)
+    // A Regular or 3D-only hall returns 0 from getWaitersCount(), so isVIP will be false there.
+    bool isVIP = (sc->getHall().getWaitersCount() > 0);
+
+    // includesMeal has no corresponding Hall/Screening property — defaults to false
     Ticket* t = isVIP
-        ? static_cast<Ticket*>(new VIPTicket(*sc, is3D, includesMeal))
+        ? static_cast<Ticket*>(new VIPTicket(*sc, is3D, false))
         : new Ticket(*sc, is3D);
 
     try {

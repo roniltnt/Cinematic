@@ -3,8 +3,9 @@
 #include <iostream>
 #include <stdexcept>
 
-Guest::Guest(const char* name, int id, int visitCount)
-    : Person(name, id), visitCount(visitCount),
+// DEVIATION FROM ORIGINAL SPEC: visitCount parameter removed; always initialized to 0 (Deviation 2)
+Guest::Guest(const char* name, int id)
+    : Person(name, id), visitCount(0),
       tickets(new Ticket*[INITIAL_TICKETS_CAPACITY]),
       numTickets(0), ticketsCapacity(INITIAL_TICKETS_CAPACITY) {}
 

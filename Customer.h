@@ -4,17 +4,12 @@
 #include "Guest.h"
 
 class Customer : public Guest {
-private:
-    int clubPoints;
-
+    // DEVIATION FROM ORIGINAL SPEC: clubPoints member removed entirely (Deviation 1)
+    // DEVIATION FROM ORIGINAL SPEC: visitCount constructor parameter removed; auto-initializes to 0 (Deviation 2)
 public:
-    Customer(const char* name, int id, int clubPoints = 0, int visitCount = 0);
+    Customer(const char* name, int id);
     Customer(const Customer& other);
     Customer& operator=(const Customer& other);
-
-    int getClubPoints() const;
-    void setClubPoints(int p);
-    void addClubPoints(int p);
 
     void printDetails() const override;
     Customer* clone() const override; // CHANGED: covariant clone for polymorphic Guest copy

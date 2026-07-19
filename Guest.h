@@ -18,7 +18,8 @@ private:
     void resizeTickets();
 
 public:
-    Guest(const char* name, int id, int visitCount = 0);
+    // DEVIATION FROM ORIGINAL SPEC: visitCount parameter removed; always auto-initialized to 0 (Deviation 2)
+    Guest(const char* name, int id);
     Guest(const Guest& other);
     Guest& operator=(const Guest& other);
     virtual ~Guest();
