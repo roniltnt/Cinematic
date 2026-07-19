@@ -3,15 +3,15 @@
 
 #include "Ticket.h"
 
+// DEVIATION FROM ORIGINAL SPEC: VIP_SURCHARGE, MEAL_PRICE, and calcFinalPrice()
+// removed (Deviation 4). Meal flag is kept as a service feature.
 class VIPTicket : public Ticket {
 private:
     bool includesMeal;
 
-    static const double VIP_SURCHARGE;
-    static const double MEAL_PRICE;
-
 public:
-    VIPTicket(const Movie& movie, bool is3D, bool includesMeal);
+    // CHANGED: constructor now takes Screening reference (Deviation 5)
+    VIPTicket(const Screening& screening, bool is3D, bool includesMeal);
     VIPTicket(const VIPTicket& other);
     VIPTicket& operator=(const VIPTicket& other) = delete;
     ~VIPTicket() override;
@@ -19,8 +19,8 @@ public:
     bool getIncludesMeal() const;
     void setIncludesMeal(bool m);
 
-    double calcFinalPrice() const override;
-    VIPTicket* clone() const override; // CHANGED: covariant clone for polymorphic Ticket copy
+    void       printTicket() const override; // CHANGED: replaces calcFinalPrice()
+    VIPTicket* clone()       const override;
 };
 
 #endif

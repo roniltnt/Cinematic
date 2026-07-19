@@ -6,10 +6,10 @@
 
 class Employee : public Person {
 private:
-    Date birthDate;
+    Date   birthDate;
     double salary;
 
-    static const double PROMOTION_PERCENTAGE;
+    // DEVIATION FROM ORIGINAL SPEC: static PROMOTION_PERCENTAGE removed (Deviation 9)
 
 public:
     Employee(const char* name, int id, const Date& birthDate, double salary);
@@ -18,11 +18,13 @@ public:
     ~Employee() override;
 
     const Date& getBirthDate() const;
-    double getSalary() const;
+    double      getSalary()    const;
 
     void setSalary(double newSalary);
 
-    Employee& operator++();
+    // DEVIATION FROM ORIGINAL SPEC: operator++() replaced by promote(pct).
+    // User supplies the percentage at runtime instead of a hardcoded 10% (Deviation 9).
+    void promote(double percentageIncrease);
 
     void printDetails() const override;
 };

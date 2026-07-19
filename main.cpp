@@ -1,439 +1,349 @@
 #include <iostream>
 #include <cstring>
-#include <climits>
 #include <stdexcept>
 
 #include "Cinema.h"
 #include "Customer.h"
 #include "Reviewer.h"
-#include "VIPTicket.h"
-#include "VIPHall.h"
 #include "Hall3D.h"
+#include "VIPHall.h"
 #include "Hall3DVIP.h"
 
-static const int MAX_INPUT_LEN = 256;
-
-static int readInt(const char* prompt) {
-    int value;
+// ============================================================
+//  I/O Helpers  (file-scope only — no global variables)
+// ============================================================
+static int readIntInRange(const char* prompt, int lo, int hi) {
+    int val;
     while (true) {
         std::cout << prompt;
-        if (std::cin >> value) {
-            std::cin.ignore(INT_MAX, '\n');
-            return value;
+        if (std::cin >> val) {
+            std::cin.ignore(10000, '\n');
+            if (val >= lo && val <= hi) return val;
+            std::cout << "  Please enter a number between " << lo << " and " << hi << ".\n";
+        } else {
+            std::cin.clear();
+            std::cin.ignore(10000, '\n');
+            std::cout << "  Invalid input. Please enter an integer.\n";
         }
-        std::cin.clear();
-        std::cin.ignore(INT_MAX, '\n');
-        std::cout << "Invalid number, please try again." << std::endl;
     }
 }
 
-static int readIntInRange(const char* prompt, int minVal, int maxVal) {
-    while (true) {
-        int v = readInt(prompt);
-        if (v >= minVal && v <= maxVal) return v;
-        std::cout << "Value must be between " << minVal
-                  << " and " << maxVal << "." << std::endl;
-    }
-}
-
-static double readPositiveDouble(const char* prompt) {
-    double value;
+static double readNonNegDouble(const char* prompt) {
+    double val;
     while (true) {
         std::cout << prompt;
-        if (std::cin >> value && value >= 0) {
-            std::cin.ignore(INT_MAX, '\n');
-            return value;
+        if (std::cin >> val && val >= 0.0) {
+            std::cin.ignore(10000, '\n');
+            return val;
         }
         std::cin.clear();
-        std::cin.ignore(INT_MAX, '\n');
-        std::cout << "Invalid value, please enter a non-negative number." << std::endl;
+        std::cin.ignore(10000, '\n');
+        std::cout << "  Invalid input. Please enter a non-negative number.\n";
     }
 }
 
-static void readLine(const char* prompt, char* buffer, int bufferSize) {
+static void readString(const char* prompt, char* buf, int size) {
     std::cout << prompt;
-    std::cin.getline(buffer, bufferSize);
-    if (std::cin.fail()) {
-        std::cin.clear();
-        std::cin.ignore(INT_MAX, '\n');
-        buffer[0] = '\0';
-    }
-}
-
-static Date readDate(const char* label) {
-    std::cout << "Enter " << label << ":" << std::endl;
-    int d = readIntInRange("  Day (1-31): ", 1, 31);
-    int m = readIntInRange("  Month (1-12): ", 1, 12);
-    int y = readIntInRange("  Year (1900-2100): ", 1900, 2100);
-    return Date(d, m, y);
+    std::cin.getline(buf, size);
+    if (!std::cin) { std::cin.clear(); buf[0] = '\0'; }
 }
 
 static bool readYesNo(const char* prompt) {
-    char buffer[8];
+    char buf[8];
     while (true) {
-        readLine(prompt, buffer, 8);
-        if (buffer[0] == 'y' || buffer[0] == 'Y') return true;
-        if (buffer[0] == 'n' || buffer[0] == 'N') return false;
-        std::cout << "Please answer with y or n." << std::endl;
+        std::cout << prompt << " (y/n): ";
+        std::cin.getline(buf, sizeof(buf));
+        if (buf[0]=='y' || buf[0]=='Y') return true;
+        if (buf[0]=='n' || buf[0]=='N') return false;
+        std::cout << "  Please enter 'y' or 'n'.\n";
     }
 }
 
-static void addHall(Cinema& cinema) {
-    std::cout << "\n--- Add new hall ---" << std::endl;
+static Date readDate(const char* header) {
+    std::cout << header << '\n';
+    int d = readIntInRange("  Day   (1-31)  : ", 1, 31);
+    int m = readIntInRange("  Month (1-12)  : ", 1, 12);
+    int y = readIntInRange("  Year          : ", 1900, 2100);
+    return Date(d, m, y);
+}
 
-    if (cinema.getNumMovies() == 0) {
-        std::cout << "No movies in the system yet. Add a movie first." << std::endl;
-        return;
-    }
+// ============================================================
+//  Action implementations
+// ============================================================
 
-    cinema.printAllMovies();
-    int movieIdx = readIntInRange("Choose movie index for this hall: ", 0, cinema.getNumMovies() - 1);
-    Movie* movie = cinema.getMovieByIndex(movieIdx);
+// Action 1 — Add Hall (no Movie; DEVIATION 1)
+static void addHallAction(Cinema& cinema) {
+    std::cout << "\n--- Add Hall ---\n";
+    std::cout << "  Hall type: 1) Regular  2) 3D  3) VIP  4) 3D+VIP\n";
+    int type = readIntInRange("  Choice: ", 1, 4);
+    int num  = readIntInRange("  Hall number: ", 1, 9999);
 
-    int hallNumber = readInt("Enter hall number: ");
+    int glasses = 0;
+    int waiters = 0;
+    if (type == 2 || type == 4)
+        glasses = readIntInRange("  Glasses count: ", 1, 9999);
+    if (type == 3 || type == 4)
+        waiters = readIntInRange("  Waiters count: ", 1, 999);
 
-    std::cout << "Choose hall type:" << std::endl
-              << "  1. Regular Hall" << std::endl
-              << "  2. VIP Hall" << std::endl
-              << "  3. 3D Hall" << std::endl
-              << "  4. 3D VIP Hall" << std::endl;
-    int type = readIntInRange("Type: ", 1, 4);
-
-    Hall* hall = nullptr;
-    switch (type) {
-        case 1:
-            hall = new Hall(hallNumber, *movie);
-            break;
-        case 2: {
-            int waiters = readIntInRange("Waiters count: ", 0, 50);
-            hall = new VIPHall(hallNumber, *movie, waiters);
-            break;
+    try {
+        Hall* h = nullptr;
+        switch (type) {
+            case 1: h = new Hall(num);                         break;
+            case 2: h = new Hall3D(num, glasses);             break;
+            case 3: h = new VIPHall(num, waiters);            break;
+            case 4: h = new Hall3DVIP(num, waiters, glasses); break;
         }
-        case 3: {
-            int glasses = readIntInRange("Glasses count: ", 0, 200);
-            hall = new Hall3D(hallNumber, *movie, glasses);
-            break;
-        }
-        case 4: {
-            int waiters = readIntInRange("Waiters count: ", 0, 50);
-            int glasses = readIntInRange("Glasses count: ", 0, 200);
-            hall = new Hall3DVIP(hallNumber, *movie, waiters, glasses);
-            break;
-        }
-    }
-
-    try {
-        cinema += hall;
-        std::cout << "Hall added successfully." << std::endl;
-    } catch (...) {
-        delete hall;
-        throw;
+        cinema += h;
+        std::cout << "  Hall #" << num << " (" << h->getHallType() << ") added.\n";
+    } catch (const std::exception& e) {
+        std::cout << "  Error: " << e.what() << '\n';
     }
 }
 
-static void addMovie(Cinema& cinema) {
-    std::cout << "\n--- Add new movie ---" << std::endl;
+// Action 2 — Add Movie (no premiere date; DEVIATION 1)
+static void addMovieAction(Cinema& cinema) {
+    std::cout << "\n--- Add Movie ---\n";
+    char title[128];
+    readString("  Title: ", title, sizeof(title));
+    int  len  = readIntInRange("  Duration (minutes): ", 1, 600);
+    bool is3D = readYesNo("  Is this a 3D movie?");
 
-    char title[MAX_INPUT_LEN];
-    readLine("Enter movie title: ", title, MAX_INPUT_LEN);
-
-    Date premiere = readDate("premiere date");
-    int length = readIntInRange("Movie length (minutes): ", 1, 600);
-    bool is3D = readYesNo("Is the movie available in 3D? (y/n): ");
-
-    Movie* movie = new Movie(title, premiere, length, is3D);
     try {
-        cinema += movie;
-        std::cout << "Movie added successfully." << std::endl;
-    } catch (...) {
-        delete movie;
-        throw;
+        cinema += new Movie(title, len, is3D);
+        std::cout << "  Movie \"" << title << "\" added.\n";
+    } catch (const std::exception& e) {
+        std::cout << "  Error: " << e.what() << '\n';
     }
 }
 
-static void addEmployee(Cinema& cinema) {
-    std::cout << "\n--- Register new employee ---" << std::endl;
+// Action 3 — Schedule Screening (DEVIATION 2, 3)
+static void scheduleScreeningAction(Cinema& cinema) {
+    std::cout << "\n--- Schedule Screening ---\n";
+    if (cinema.getNumMovies() == 0) { std::cout << "  No movies available.\n";  return; }
+    if (cinema.getNumHalls()  == 0) { std::cout << "  No halls available.\n";   return; }
 
-    char name[MAX_INPUT_LEN];
-    readLine("Employee name: ", name, MAX_INPUT_LEN);
-    int id = readInt("ID number: ");
-    Date birth = readDate("birth date");
-    double salary = readPositiveDouble("Base salary: ");
-
-    Employee* emp = new Employee(name, id, birth, salary);
-    try {
-        cinema += emp;
-        std::cout << "Employee registered successfully." << std::endl;
-    } catch (...) {
-        delete emp;
-        throw;
-    }
-}
-
-static void addGuest(Cinema& cinema) {
-    std::cout << "\n--- Register new guest ---" << std::endl;
-
-    std::cout << "Choose guest type:" << std::endl
-              << "  1. Customer (club member)" << std::endl
-              << "  2. Reviewer (movie critic)" << std::endl;
-    int type = readIntInRange("Type: ", 1, 2);
-
-    char name[MAX_INPUT_LEN];
-    readLine("Guest name: ", name, MAX_INPUT_LEN);
-    int id = readInt("ID number: ");
-
-    Guest* guest = nullptr;
-    if (type == 1) {
-        int points = readIntInRange("Initial club points: ", 0, 100000);
-        guest = new Customer(name, id, points);
-    } else {
-        char pub[MAX_INPUT_LEN];
-        readLine("Publication name: ", pub, MAX_INPUT_LEN);
-        guest = new Reviewer(name, id, pub);
-    }
-
-    try {
-        cinema += guest;
-        std::cout << "Guest registered successfully." << std::endl;
-    } catch (...) {
-        delete guest;
-        throw;
-    }
-}
-
-static void sellTicket(Cinema& cinema) {
-    std::cout << "\n--- Sell ticket ---" << std::endl;
-
-    if (cinema.getNumGuests() == 0) {
-        std::cout << "No guests in the system. Register one first." << std::endl;
-        return;
-    }
-    if (cinema.getNumMovies() == 0) {
-        std::cout << "No movies in the system. Add one first." << std::endl;
-        return;
-    }
-
-    cinema.printAllGuests();
-    int guestIdx = readIntInRange("Choose guest index: ", 0, cinema.getNumGuests() - 1);
-    Guest* guest = cinema.getGuestByIndex(guestIdx);
-
+    std::cout << "\n  Movies:\n";
     cinema.printAllMovies();
-    int movieIdx = readIntInRange("Choose movie index: ", 0, cinema.getNumMovies() - 1);
-    const Movie* movie = cinema.getMovieByIndex(movieIdx);
+    // DEVIATION FROM ORIGINAL SPEC: 1-based selection (Deviation 8)
+    int mChoice = readIntInRange("  Select movie #: ", 1, cinema.getNumMovies()) - 1;
 
-    bool is3D = readYesNo("Is the ticket for 3D? (y/n): ");
-
-    std::cout << "Ticket type:" << std::endl
-              << "  1. Regular" << std::endl
-              << "  2. VIP" << std::endl;
-    int type = readIntInRange("Type: ", 1, 2);
-
-    Ticket* ticket = nullptr;
-    if (type == 1) {
-        ticket = new Ticket(*movie, is3D);
-    } else {
-        bool meal = readYesNo("Include meal? (y/n): ");
-        ticket = new VIPTicket(*movie, is3D, meal);
-    }
-
-    try {
-        guest->addTicket(ticket);
-        std::cout << "Ticket sold. Final price: "
-                  << ticket->calcFinalPrice() << std::endl;
-    } catch (...) {
-        delete ticket;
-        throw;
-    }
-}
-
-static void printMovieDetails(const Cinema& cinema) {
-    std::cout << "\n--- Print movie details ---" << std::endl;
-
-    if (cinema.getNumMovies() == 0) {
-        std::cout << "No movies available." << std::endl;
-        return;
-    }
-
-    cinema.printAllMovies();
-    int idx = readIntInRange("Choose movie index: ", 0, cinema.getNumMovies() - 1);
-
-    const Movie* m = cinema.getMovieByIndex(idx);
-    std::cout << *m << std::endl;
-}
-
-static void addEmployeeToShift(Cinema& cinema) {
-    std::cout << "\n--- Add employee to shift ---" << std::endl;
-
-    if (cinema.getNumEmployees() == 0) {
-        std::cout << "No employees registered." << std::endl;
-        return;
-    }
-
-    cinema.printAllEmployees();
-    int idx = readIntInRange("Choose employee index: ", 0, cinema.getNumEmployees() - 1);
-    const Employee* emp = cinema.getEmployeeByIndex(idx);
-
-    int hours = readIntInRange("Shift length (hours): ", 1, 24);
-    Date shiftDate = readDate("shift date");
-
-    Shift* shift = new Shift(*emp, hours, shiftDate);
-    try {
-        cinema += shift;
-        std::cout << "Shift created successfully." << std::endl;
-    } catch (...) {
-        delete shift;
-        throw;
-    }
-}
-
-static void promoteEmployee(Cinema& cinema) {
-    std::cout << "\n--- Promote employee ---" << std::endl;
-
-    if (cinema.getNumEmployees() == 0) {
-        std::cout << "No employees to promote." << std::endl;
-        return;
-    }
-
-    cinema.printAllEmployees();
-    int idx = readIntInRange("Choose employee index: ", 0, cinema.getNumEmployees() - 1);
-    Employee* emp = cinema.getEmployeeByIndex(idx);
-
-    double oldSalary = emp->getSalary();
-    ++(*emp);
-    std::cout << "Salary updated: " << oldSalary
-              << " -> " << emp->getSalary() << std::endl;
-}
-
-static void compareTickets(const Cinema& cinema) {
-    std::cout << "\n--- Compare ticket prices ---" << std::endl;
-
-    int n = cinema.getNumGuests();
-    if (n == 0) {
-        std::cout << "No guests in the system." << std::endl;
-        return;
-    }
-
-    cinema.printAllGuests();
-    int g1Idx = readIntInRange("First guest index: ", 0, n - 1);
-    const Guest* g1 = cinema.getGuestByIndex(g1Idx);
-    if (g1->getNumTickets() == 0) {
-        std::cout << "This guest has no tickets." << std::endl;
-        return;
-    }
-    int t1Idx = readIntInRange("First ticket index: ", 0, g1->getNumTickets() - 1);
-    const Ticket* t1 = g1->getTicket(t1Idx);
-
-    int g2Idx = readIntInRange("Second guest index: ", 0, n - 1);
-    const Guest* g2 = cinema.getGuestByIndex(g2Idx);
-    if (g2->getNumTickets() == 0) {
-        std::cout << "This guest has no tickets." << std::endl;
-        return;
-    }
-    int t2Idx = readIntInRange("Second ticket index: ", 0, g2->getNumTickets() - 1);
-    const Ticket* t2 = g2->getTicket(t2Idx);
-
-    if (*t1 > *t2) {
-        std::cout << "First ticket is more expensive ("
-                  << t1->calcFinalPrice() << " vs "
-                  << t2->calcFinalPrice() << ")" << std::endl;
-    } else {
-        std::cout << "Second ticket is more expensive or equal ("
-                  << t2->calcFinalPrice() << " vs "
-                  << t1->calcFinalPrice() << ")" << std::endl;
-    }
-}
-
-static void checkHallEmpty(const Cinema& cinema) {
-    std::cout << "\n--- Check hall availability ---" << std::endl;
-
-    if (cinema.getNumHalls() == 0) {
-        std::cout << "No halls in the system." << std::endl;
-        return;
-    }
-
+    std::cout << "\n  Halls:\n";
     cinema.printAllHalls();
-    int idx = readIntInRange("Choose hall index: ", 0, cinema.getNumHalls() - 1);
+    // DEVIATION FROM ORIGINAL SPEC: 1-based selection (Deviation 8)
+    int hChoice = readIntInRange("  Select hall #: ", 1, cinema.getNumHalls()) - 1;
 
-    const Hall* hall = cinema.getHallByIndex(idx);
-    if (!(*hall)) {
-        std::cout << "The hall is completely empty (all seats available)." << std::endl;
+    Date date   = readDate("  Screening date:");
+    int  hour   = readIntInRange("  Start hour   (0-23): ", 0, 23);
+    int  minute = readIntInRange("  Start minute (0-59): ", 0, 59);
+
+    // DEVIATION FROM ORIGINAL SPEC: 3D-match prompt if applicable (Deviation 2)
+    bool is3D = false;
+    if (cinema.canSchedule3D(mChoice, hChoice)) {
+        is3D = readYesNo("  This hall supports 3D and the movie is 3D. Schedule as 3D?");
     } else {
-        std::cout << "The hall has some seats taken." << std::endl;
+        const Movie* m = cinema.getMovieByIndex(mChoice);
+        const Hall*  h = cinema.getHallByIndex(hChoice);
+        if (m->getIs3D() && h->get3DGlassesCount() == 0)
+            std::cout << "  Note: movie is 3D but hall has no 3D glasses — scheduling as 2D.\n";
+    }
+
+    try {
+        cinema.scheduleScreening(mChoice, hChoice, date, hour, minute, is3D);
+        std::cout << "  Screening scheduled successfully.\n";
+    } catch (const std::exception& e) {
+        std::cout << "  Error: " << e.what() << '\n';
     }
 }
 
-static void printAllGuestsOperation(const Cinema& cinema) {
-    std::cout << "\n--- All guests (polymorphic print) ---" << std::endl;
-    cinema.printAllGuests();
+// Action 4 — Add Employee
+static void addEmployeeAction(Cinema& cinema) {
+    std::cout << "\n--- Add Employee ---\n";
+    char name[128];
+    readString("  Name: ", name, sizeof(name));
+    int    id     = readIntInRange("  ID: ", 1, 999999);
+    Date   bday   = readDate("  Birth date:");
+    double salary = readNonNegDouble("  Salary: ");
+
+    try {
+        cinema += new Employee(name, id, bday, salary);
+        std::cout << "  Employee \"" << name << "\" added.\n";
+    } catch (const std::exception& e) {
+        std::cout << "  Error: " << e.what() << '\n';
+    }
 }
 
-static void removeGuest(Cinema& cinema) {
-    std::cout << "\n--- Remove guest ---" << std::endl;
+// Action 5 — Add Guest (Customer or Reviewer)
+static void addGuestAction(Cinema& cinema) {
+    std::cout << "\n--- Add Guest ---\n";
+    std::cout << "  Guest type: 1) Customer  2) Reviewer\n";
+    int type = readIntInRange("  Choice: ", 1, 2);
 
-    if (cinema.getNumGuests() == 0) {
-        std::cout << "No guests to remove." << std::endl;
+    char name[128];
+    readString("  Name: ", name, sizeof(name));
+    int id     = readIntInRange("  ID: ", 1, 999999);
+    int visits = readIntInRange("  Visit count: ", 0, 9999);
+
+    try {
+        if (type == 1) {
+            int pts = readIntInRange("  Club points: ", 0, 999999);
+            cinema += new Customer(name, id, pts, visits);
+        } else {
+            char pub[128];
+            readString("  Publication name: ", pub, sizeof(pub));
+            cinema += new Reviewer(name, id, pub, visits);
+        }
+        std::cout << "  Guest \"" << name << "\" added.\n";
+    } catch (const std::exception& e) {
+        std::cout << "  Error: " << e.what() << '\n';
+    }
+}
+
+// Action 6 — Sell Ticket (DEVIATION 5, 6)
+static void sellTicketAction(Cinema& cinema) {
+    std::cout << "\n--- Sell Ticket ---\n";
+    if (cinema.getNumScreenings() == 0) { std::cout << "  No screenings scheduled.\n"; return; }
+    if (cinema.getNumGuests()     == 0) { std::cout << "  No guests registered.\n";    return; }
+
+    std::cout << "\n  Screenings:\n";
+    cinema.printAllScreenings();
+    // DEVIATION FROM ORIGINAL SPEC: 1-based selection (Deviation 8)
+    int scChoice = readIntInRange("  Select screening #: ", 1, cinema.getNumScreenings()) - 1;
+
+    const Screening* sc = cinema.getScreeningByIndex(scChoice);
+    if (sc->getAvailableSeats() == 0) {
+        std::cout << "  Sorry, this screening is fully booked.\n";
         return;
     }
+    std::cout << "  Available seats: " << sc->getAvailableSeats() << '\n';
 
+    std::cout << "\n  Guests:\n";
     cinema.printAllGuests();
-    int id = readInt("Enter ID of guest to remove: ");
+    // DEVIATION FROM ORIGINAL SPEC: 1-based selection (Deviation 8)
+    int gChoice = readIntInRange("  Select guest #: ", 1, cinema.getNumGuests()) - 1;
 
-    cinema -= id;
-    std::cout << "Guest removed successfully." << std::endl;
+    // DEVIATION FROM ORIGINAL SPEC: Ticket now references a Screening (Deviation 5)
+    bool is3D = false;
+    if (sc->getIs3DScreening())
+        is3D = readYesNo("  This is a 3D screening. Buy 3D ticket?");
+
+    std::cout << "  Ticket type: 1) Regular  2) VIP\n";
+    int  ttype       = readIntInRange("  Choice: ", 1, 2);
+    bool isVIP       = (ttype == 2);
+    bool includesMeal = false;
+    if (isVIP) includesMeal = readYesNo("  Include meal?");
+
+    try {
+        cinema.sellTicket(scChoice, gChoice, is3D, isVIP, includesMeal);
+        std::cout << "  Ticket sold. Remaining seats: "
+                  << cinema.getScreeningByIndex(scChoice)->getAvailableSeats() << '\n';
+    } catch (const std::exception& e) {
+        std::cout << "  Error: " << e.what() << '\n';
+    }
 }
 
-static void printMenu() {
-    std::cout << "\n========== Cinema Management System ==========" << std::endl
-              << "  1.  Add new hall" << std::endl
-              << "  2.  Add new movie" << std::endl
-              << "  3.  Register new employee" << std::endl
-              << "  4.  Register new guest" << std::endl
-              << "  5.  Sell ticket" << std::endl
-              << "  6.  Print movie details" << std::endl
-              << "  7.  Add employee to shift" << std::endl
-              << "  8.  Promote employee (raise salary)" << std::endl
-              << "  9.  Compare ticket prices" << std::endl
-              << " 10.  Check if hall is empty" << std::endl
-              << " 11.  Print all guests (polymorphism)" << std::endl
-              << " 12.  Remove guest from system" << std::endl
-              << "  0.  Exit" << std::endl
-              << "==============================================" << std::endl;
+// Action 10 — Add Shift
+static void addShiftAction(Cinema& cinema) {
+    std::cout << "\n--- Add Shift ---\n";
+    if (cinema.getNumEmployees() == 0) { std::cout << "  No employees registered.\n"; return; }
+
+    std::cout << "\n  Employees:\n";
+    cinema.printAllEmployees();
+    // DEVIATION FROM ORIGINAL SPEC: 1-based selection (Deviation 8)
+    int eChoice = readIntInRange("  Select employee #: ", 1, cinema.getNumEmployees()) - 1;
+    int len     = readIntInRange("  Shift length (hours): ", 1, 24);
+    Date date   = readDate("  Shift date:");
+
+    try {
+        cinema += new Shift(*cinema.getEmployeeByIndex(eChoice), len, date);
+        std::cout << "  Shift added.\n";
+    } catch (const std::exception& e) {
+        std::cout << "  Error: " << e.what() << '\n';
+    }
 }
 
+// Action 11 — Promote Employee (DEVIATION 9)
+static void promoteEmployeeAction(Cinema& cinema) {
+    std::cout << "\n--- Promote Employee ---\n";
+    if (cinema.getNumEmployees() == 0) { std::cout << "  No employees registered.\n"; return; }
+
+    std::cout << "\n  Employees:\n";
+    cinema.printAllEmployees();
+    // DEVIATION FROM ORIGINAL SPEC: 1-based selection (Deviation 8)
+    int eChoice = readIntInRange("  Select employee #: ", 1, cinema.getNumEmployees()) - 1;
+
+    // DEVIATION FROM ORIGINAL SPEC: user enters percentage at runtime — NOT ++(*emp) (Deviation 9)
+    double pct = readNonNegDouble("  Raise percentage (e.g. 10 for 10%): ");
+
+    try {
+        cinema.getEmployeeByIndex(eChoice)->promote(pct);
+        std::cout << "  Employee promoted with a " << pct << "% raise.\n";
+    } catch (const std::exception& e) {
+        std::cout << "  Error: " << e.what() << '\n';
+    }
+}
+
+// Action 13 — Delete Guest
+static void deleteGuestAction(Cinema& cinema) {
+    std::cout << "\n--- Delete Guest ---\n";
+    if (cinema.getNumGuests() == 0) { std::cout << "  No guests registered.\n"; return; }
+
+    std::cout << "\n  Guests:\n";
+    cinema.printAllGuests();
+    int id = readIntInRange("  Enter guest ID to remove: ", 0, 999999);
+
+    try {
+        cinema -= id;
+        std::cout << "  Guest removed.\n";
+    } catch (const std::exception& e) {
+        std::cout << "  Error: " << e.what() << '\n';
+    }
+}
+
+// ============================================================
+//  Main — 14-action menu loop
+// ============================================================
 int main() {
     Cinema cinema;
-    int choice;
 
-    std::cout << "Welcome to the Cinema Management System!" << std::endl;
+    const char* MENU =
+        "\n========================================\n"
+        "       Smart Cinema Management\n"
+        "========================================\n"
+        " 1.  Add Hall\n"
+        " 2.  Add Movie\n"
+        " 3.  Schedule Screening\n"
+        " 4.  Add Employee\n"
+        " 5.  Add Guest\n"
+        " 6.  Sell Ticket\n"
+        " 7.  Print All Movies\n"
+        " 8.  Print All Halls\n"
+        " 9.  Print All Screenings\n"
+        "10.  Add Shift\n"
+        "11.  Promote Employee\n"
+        "12.  Print All Guests\n"
+        "13.  Delete Guest\n"
+        "14.  Exit\n"
+        "========================================\n";
 
-    do {
-        printMenu();
-        choice = readInt("Choose an option: ");
+    while (true) {
+        std::cout << MENU;
+        int choice = readIntInRange("Choice: ", 1, 14);
 
-        try {
-            switch (choice) {
-                case 1:  addHall(cinema);                break;
-                case 2:  addMovie(cinema);               break;
-                case 3:  addEmployee(cinema);            break;
-                case 4:  addGuest(cinema);               break;
-                case 5:  sellTicket(cinema);             break;
-                case 6:  printMovieDetails(cinema);      break;
-                case 7:  addEmployeeToShift(cinema);     break;
-                case 8:  promoteEmployee(cinema);        break;
-                case 9:  compareTickets(cinema);         break;
-                case 10: checkHallEmpty(cinema);         break;
-                case 11: printAllGuestsOperation(cinema); break;
-                case 12: removeGuest(cinema);            break;
-                case 0:  std::cout << "Goodbye!" << std::endl; break;
-                default:
-                    std::cout << "Invalid choice. Please pick 0-12." << std::endl;
-            }
-        } catch (const std::exception& e) {
-            std::cerr << "Error: " << e.what() << std::endl;
-        } catch (...) {
-            std::cerr << "An unknown error occurred." << std::endl;
+        switch (choice) {
+            case  1: addHallAction(cinema);                          break;
+            case  2: addMovieAction(cinema);                         break;
+            case  3: scheduleScreeningAction(cinema);                break;
+            case  4: addEmployeeAction(cinema);                      break;
+            case  5: addGuestAction(cinema);                         break;
+            case  6: sellTicketAction(cinema);                       break;
+            case  7: std::cout << '\n'; cinema.printAllMovies();     break;
+            case  8: std::cout << '\n'; cinema.printAllHalls();      break;
+            case  9: std::cout << '\n'; cinema.printAllScreenings(); break;
+            case 10: addShiftAction(cinema);                         break;
+            case 11: promoteEmployeeAction(cinema);                  break;
+            case 12: std::cout << '\n'; cinema.printAllGuests();     break;
+            case 13: deleteGuestAction(cinema);                      break;
+            case 14: std::cout << "Goodbye!\n"; return 0;
         }
-    } while (choice != 0);
-
-    return 0;
+    }
 }

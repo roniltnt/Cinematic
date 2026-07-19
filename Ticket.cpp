@@ -1,31 +1,30 @@
 #include "Ticket.h"
+#include "Screening.h"
+#include <iostream>
 
-const double Ticket::BASE_PRICE        = 30.0;
-const double Ticket::THREE_D_SURCHARGE = 10.0;
+// DEVIATION FROM ORIGINAL SPEC: Ticket now references a Screening, not a Movie (Deviation 5).
+// BASE_PRICE, THREE_D_SURCHARGE, calcFinalPrice(), operator> all removed (Deviation 4).
 
-// movieRef is a const reference — binds to the Movie managed by Cinema
-Ticket::Ticket(const Movie& movie, bool is3D)
-    : movieRef(movie), is3D(is3D) {}
+Ticket::Ticket(const Screening& screening, bool is3D)
+    : screeningRef(screening), is3D(is3D) {}
 
-// Copy binds to the same Movie; Ticket does not own its movie
+// Copy binds to the same Screening (reference aliasing — Screening is owned by Cinema)
 Ticket::Ticket(const Ticket& other)
-    : movieRef(other.movieRef), is3D(other.is3D) {}
+    : screeningRef(other.screeningRef), is3D(other.is3D) {}
 
-Ticket::~Ticket() {}  // virtual; no owned dynamic memory
+Ticket::~Ticket() {}
 
-const Movie& Ticket::getMovie() const { return movieRef; }
-bool         Ticket::getIs3D()  const { return is3D;     }
+const Screening& Ticket::getScreening() const { return screeningRef; }
+bool             Ticket::getIs3D()      const { return is3D;         }
+void             Ticket::setIs3D(bool flag)    { is3D = flag;         }
 
-void Ticket::setIs3D(bool flag) { is3D = flag; }
-
-double Ticket::calcFinalPrice() const {
-    return BASE_PRICE + (is3D ? THREE_D_SURCHARGE : 0.0);
+// CHANGED: printTicket() replaces calcFinalPrice()
+void Ticket::printTicket() const {
+    std::cout << "[Regular] Movie: \"" << screeningRef.getMovie().getTitle() << "\""
+              << " | Hall: #"          << screeningRef.getHall().getHallNumber()
+              << " | Date: "           << screeningRef.getDate()
+              << " | 3D: "             << (is3D ? "Yes" : "No")
+              << std::endl;
 }
 
-bool Ticket::operator>(const Ticket& other) const {
-    return calcFinalPrice() > other.calcFinalPrice();
-}
-
-Ticket* Ticket::clone() const {
-    return new Ticket(*this);
-}
+Ticket* Ticket::clone() const { return new Ticket(*this); }

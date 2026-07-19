@@ -6,13 +6,17 @@
 
 class Hall3DVIP : public VIPHall, public Hall3D {
 public:
-    Hall3DVIP(int hallNumber, const Movie& currentMovie, int waitersCount, int glassesCount); // CHANGED: const Movie&
+    // CHANGED: removed Movie parameter; DEVIATION FROM ORIGINAL SPEC (Deviation 1)
+    Hall3DVIP(int hallNumber, int waitersCount, int glassesCount);
     Hall3DVIP(const Hall3DVIP& other);
     Hall3DVIP& operator=(const Hall3DVIP& other) = delete;
     ~Hall3DVIP() override;
 
-    void printHall() const override;
-    Hall* clone() const override; // CHANGED: returns Hall* (not covariant) — MSVC rejects covariant overrides across a virtual-inheritance diamond
+    // DEVIATION FROM ORIGINAL SPEC: must override here to resolve VIPHall/"3D" vs "VIP" ambiguity
+    const char* getHallType() const override; // returns "3D+VIP"
+
+    void  printHall() const override;
+    Hall* clone()     const override;
 };
 
 #endif

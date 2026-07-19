@@ -1,37 +1,35 @@
 #ifndef HALL_H
 #define HALL_H
 
-#include "Movie.h"
+#include <iostream>
 
+// DEVIATION FROM ORIGINAL SPEC: Hall no longer stores a Movie reference or a seats array.
+// It is a pure physical description. Seat tracking moves to Screening (Deviations 1, 6).
 class Hall {
 public:
     static const int NUM_SEATS = 100;
 
 private:
     int hallNumber;
-    bool seats[NUM_SEATS];
-    const Movie& currentMovie; // CHANGED: const ref — non-const ref breaks copy ctor (can't bind Movie& from const Hall&)
 
 public:
-    Hall(int hallNumber, const Movie& currentMovie); // CHANGED: parameter is now const Movie&
+    // CHANGED: constructor no longer takes a Movie reference
+    Hall(int hallNumber);
     Hall(const Hall& other);
     Hall& operator=(const Hall& other) = delete;
     virtual ~Hall();
 
-    int getHallNumber() const;
-    const Movie& getCurrentMovie() const;
-    bool isSeatTaken(int seatIndex) const;
-    int countTakenSeats() const;
-
+    int  getHallNumber() const;
     void setHallNumber(int num);
 
-    void takeSeat(int seatIndex);
-    void freeSeat(int seatIndex);
+    // DEVIATION FROM ORIGINAL SPEC: virtual type/capacity queries used by Screening
+    // and Cinema to implement 3D capacity limiting (Deviation 3) and table printing (Deviation 8).
+    virtual const char* getHallType()        const; // returns "Regular" in base
+    virtual int         get3DGlassesCount()  const; // returns 0 in base (not 3D capable)
+    virtual int         getWaitersCount()    const; // returns 0 in base (not VIP)
 
-    bool operator!() const;
-
-    virtual void printHall() const;
-    virtual Hall* clone() const; // CHANGED: virtual clone for polymorphic copy in Cinema
+    virtual void  printHall() const;
+    virtual Hall* clone()     const;
 };
 
 #endif

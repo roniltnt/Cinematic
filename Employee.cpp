@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 
-const double Employee::PROMOTION_PERCENTAGE = 0.10;
+// DEVIATION FROM ORIGINAL SPEC: PROMOTION_PERCENTAGE constant removed (Deviation 9)
 
 Employee::Employee(const char* name, int id, const Date& birthDate, double salary)
     : Person(name, id), birthDate(birthDate), salary(salary) {
@@ -20,7 +20,7 @@ Employee& Employee::operator=(const Employee& other) {
     return *this;
 }
 
-Employee::~Employee() {}  // Person destructor handles the dynamic name
+Employee::~Employee() {}
 
 const Date& Employee::getBirthDate() const { return birthDate; }
 double      Employee::getSalary()    const { return salary;    }
@@ -30,9 +30,11 @@ void Employee::setSalary(double newSalary) {
     salary = newSalary;
 }
 
-Employee& Employee::operator++() {
-    salary *= (1.0 + PROMOTION_PERCENTAGE);
-    return *this;
+// DEVIATION FROM ORIGINAL SPEC: user-supplied percentage instead of hardcoded 10% (Deviation 9)
+void Employee::promote(double percentageIncrease) {
+    if (percentageIncrease < 0)
+        throw std::invalid_argument("Promotion percentage cannot be negative.");
+    salary *= (1.0 + percentageIncrease / 100.0);
 }
 
 void Employee::printDetails() const {

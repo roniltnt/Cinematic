@@ -8,16 +8,21 @@ private:
     int glassesCount;
 
 public:
-    Hall3D(int hallNumber, const Movie& currentMovie, int glassesCount); // CHANGED: const Movie&
+    // CHANGED: removed Movie parameter; DEVIATION FROM ORIGINAL SPEC (Deviation 1)
+    Hall3D(int hallNumber, int glassesCount);
     Hall3D(const Hall3D& other);
     Hall3D& operator=(const Hall3D& other) = delete;
     ~Hall3D() override;
 
-    int getGlassesCount() const;
+    int  getGlassesCount() const;
     void setGlassesCount(int c);
 
-    void printHall() const override;
-    Hall* clone() const override; // CHANGED: returns Hall* (not covariant) — MSVC rejects covariant overrides across a virtual-inheritance diamond
+    // DEVIATION FROM ORIGINAL SPEC: overrides for type/capacity queries (Deviations 3, 8)
+    const char* getHallType()       const override; // returns "3D"
+    int         get3DGlassesCount() const override; // returns glassesCount
+
+    void  printHall() const override;
+    Hall* clone()     const override;
 };
 
 #endif

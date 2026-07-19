@@ -8,16 +8,20 @@ private:
     int waitersCount;
 
 public:
-    VIPHall(int hallNumber, const Movie& currentMovie, int waitersCount); // CHANGED: const Movie&
+    // CHANGED: removed Movie parameter; DEVIATION FROM ORIGINAL SPEC (Deviation 1)
+    VIPHall(int hallNumber, int waitersCount);
     VIPHall(const VIPHall& other);
     VIPHall& operator=(const VIPHall& other) = delete;
     ~VIPHall() override;
 
-    int getWaitersCount() const;
+    // DEVIATION FROM ORIGINAL SPEC: overrides Hall's virtual queries (Deviations 3, 8)
+    const char* getHallType()    const override; // returns "VIP"
+    int         getWaitersCount() const override; // CHANGED: satisfies Hall's virtual; was non-virtual getter
+
     void setWaitersCount(int c);
 
-    void printHall() const override;
-    Hall* clone() const override; // CHANGED: returns Hall* (not covariant) — MSVC rejects covariant overrides across a virtual-inheritance diamond
+    void  printHall() const override;
+    Hall* clone()     const override;
 };
 
 #endif

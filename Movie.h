@@ -2,25 +2,25 @@
 #define MOVIE_H
 
 #include <iostream>
-#include "Date.h"
 
+// DEVIATION FROM ORIGINAL SPEC: Movie no longer carries a premiere Date.
+// Only title, duration, and 3D flag are stored (Deviation 1).
 class Movie {
 private:
     char* title;
-    Date premiereDate;
     int lengthMinutes;
     bool is3D;
 
 public:
-    Movie(const char* title, const Date& premiereDate, int lengthMinutes, bool is3D);
+    // CHANGED: removed Date parameter from constructor (Deviation 1)
+    Movie(const char* title, int lengthMinutes, bool is3D);
     Movie(const Movie& other);
     Movie& operator=(const Movie& other);
     ~Movie();
 
-    const char* getTitle() const;
-    const Date& getPremiereDate() const;
-    int getLengthMinutes() const;
-    bool getIs3D() const;
+    const char* getTitle()        const;
+    int         getLengthMinutes() const;
+    bool        getIs3D()         const;
 
     void setTitle(const char* newTitle);
     void setLengthMinutes(int minutes);
