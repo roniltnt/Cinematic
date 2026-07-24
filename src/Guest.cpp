@@ -1,5 +1,5 @@
-#include "Guest.h"
-#include "Ticket.h"
+#include "../include/Guest.h"
+#include "../include/Ticket.h"
 #include <iostream>
 #include <stdexcept>
 

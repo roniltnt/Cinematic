@@ -46,6 +46,9 @@ private:
     void resizeShifts();
     void resizeScreenings(); // DEVIATION FROM ORIGINAL SPEC
 
+    // Used by operator= (copy-and-swap) so a throw during copying leaves *this untouched.
+    void swap(Cinema& other) noexcept;
+
 public:
     Cinema();
     Cinema(const Cinema& other);

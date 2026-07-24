@@ -1,4 +1,4 @@
-#include "VIPHall.h"
+#include "../include/VIPHall.h"
 #include <iostream>
 #include <stdexcept>
 

@@ -1,4 +1,4 @@
-#include "Hall.h"
+#include "../include/Hall.h"
 #include <iostream>
 
 // DEVIATION FROM ORIGINAL SPEC: no Movie reference, no seats array (Deviations 1, 6)

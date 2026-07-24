@@ -1,5 +1,5 @@
-#include "Ticket.h"
-#include "Screening.h"
+#include "../include/Ticket.h"
+#include "../include/Screening.h"
 #include <iostream>
 
 // DEVIATION FROM ORIGINAL SPEC: Ticket now references a Screening, not a Movie (Deviation 5).

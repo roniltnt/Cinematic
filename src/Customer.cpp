@@ -1,4 +1,4 @@
-#include "Customer.h"
+#include "../include/Customer.h"
 #include <iostream>
 
 // DEVIATION FROM ORIGINAL SPEC: clubPoints removed entirely (Deviation 1)

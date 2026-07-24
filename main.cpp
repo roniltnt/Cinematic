@@ -2,12 +2,12 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "Cinema.h"
-#include "Customer.h"
-#include "Reviewer.h"
-#include "Hall3D.h"
-#include "VIPHall.h"
-#include "Hall3DVIP.h"
+#include "include/Cinema.h"
+#include "include/Customer.h"
+#include "include/Reviewer.h"
+#include "include/Hall3D.h"
+#include "include/VIPHall.h"
+#include "include/Hall3DVIP.h"
 
 // ============================================================
 //  I/O Helpers  (file-scope only — no global variables)
@@ -45,7 +45,11 @@ static double readNonNegDouble(const char* prompt) {
 static void readString(const char* prompt, char* buf, int size) {
     std::cout << prompt;
     std::cin.getline(buf, size);
-    if (!std::cin) { std::cin.clear(); buf[0] = '\0'; }
+    if (!std::cin) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n'); // discard the rest of an overlong line
+        buf[0] = '\0';
+    }
 }
 
 static bool readYesNo(const char* prompt) {

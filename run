@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+
+SRC_DIR="src"
+BIN="cinema_app"
+
+obj_files=()
+for src in main.cpp "$SRC_DIR"/*.cpp; do
+    obj="${src%.cpp}.o"
+    g++ -std=c++17 -Wall -c "$src" -o "$obj"
+    obj_files+=("$obj")
+done
+
+g++ "${obj_files[@]}" -o "$BIN"
+
+./"$BIN"
+status=$?
+
+rm -f "${obj_files[@]}" "$BIN"
+
+exit $status

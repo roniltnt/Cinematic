@@ -1,4 +1,4 @@
-#include "Hall3DVIP.h"
+#include "../include/Hall3DVIP.h"
 #include <iostream>
 
 // DEVIATION FROM ORIGINAL SPEC: no Movie parameter; virtual base Hall initialized directly (Deviation 1)

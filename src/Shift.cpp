@@ -1,4 +1,4 @@
-#include "Shift.h"
+#include "../include/Shift.h"
 #include <iostream>
 #include <stdexcept>
 

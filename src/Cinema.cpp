@@ -1,10 +1,11 @@
-#include "Cinema.h"
-#include "VIPTicket.h" // needed only in sellTicket() — kept out of Cinema.h to limit coupling
+#include "../include/Cinema.h"
+#include "../include/VIPTicket.h" // needed only in sellTicket() — kept out of Cinema.h to limit coupling
 #include <iostream>
 #include <iomanip>
 #include <cstring>
 #include <cstdio>
 #include <stdexcept>
+#include <utility>
 
 // ============================================================
 //  ASCII-table helpers (file-scope only)
@@ -31,10 +32,6 @@ static void tableCell(const char* str, int width) {
         for (int i = 0; i < width - 3; ++i) std::cout << str[i];
         std::cout << "... ";
     }
-}
-
-static void tableCellInt(int val, int width) {
-    std::cout << ' ' << std::right << std::setw(width) << val << ' ';
 }
 
 // ============================================================
@@ -77,40 +74,43 @@ Cinema::Cinema(const Cinema& other)
 }
 
 // ============================================================
-//  Assignment Operator
+//  Assignment Operator — copy-and-swap.
+//  Cinema(other) builds an entire independent copy first; only if that fully
+//  succeeds do we swap it into *this. If cloning throws partway (e.g. bad_alloc),
+//  *this is left completely untouched instead of ending up with mismatched
+//  counts/arrays (which previously could crash the destructor on stale pointers).
 // ============================================================
 Cinema& Cinema::operator=(const Cinema& other) {
     if (this == &other) return *this;
-    for (int i = 0; i < numShifts;     ++i) delete shifts[i];
-    for (int i = 0; i < numScreenings; ++i) delete screenings[i];
-    for (int i = 0; i < numGuests;     ++i) delete guests[i];
-    for (int i = 0; i < numEmployees;  ++i) delete employees[i];
-    for (int i = 0; i < numHalls;      ++i) delete halls[i];
-    for (int i = 0; i < numMovies;     ++i) delete movies[i];
-    delete[] shifts;  delete[] screenings; delete[] guests;
-    delete[] employees; delete[] halls;   delete[] movies;
-
-    numEmployees  = other.numEmployees;  employeesCapacity  = other.employeesCapacity;
-    numGuests     = other.numGuests;     guestsCapacity     = other.guestsCapacity;
-    numHalls      = other.numHalls;      hallsCapacity      = other.hallsCapacity;
-    numMovies     = other.numMovies;     moviesCapacity     = other.moviesCapacity;
-    numShifts     = other.numShifts;     shiftsCapacity     = other.shiftsCapacity;
-    numScreenings = other.numScreenings; screeningsCapacity = other.screeningsCapacity;
-
-    employees  = new Employee* [employeesCapacity];
-    guests     = new Guest*    [guestsCapacity];
-    halls      = new Hall*     [hallsCapacity];
-    movies     = new Movie*    [moviesCapacity];
-    shifts     = new Shift*    [shiftsCapacity];
-    screenings = new Screening*[screeningsCapacity];
-
-    for (int i = 0; i < numEmployees;  ++i) employees[i]  = new Employee(*other.employees[i]);
-    for (int i = 0; i < numGuests;     ++i) guests[i]     = other.guests[i]->clone();
-    for (int i = 0; i < numMovies;     ++i) movies[i]     = new Movie(*other.movies[i]);
-    for (int i = 0; i < numHalls;      ++i) halls[i]      = other.halls[i]->clone();
-    for (int i = 0; i < numScreenings; ++i) screenings[i] = new Screening(*other.screenings[i]);
-    for (int i = 0; i < numShifts;     ++i) shifts[i]     = new Shift(*other.shifts[i]);
+    Cinema tmp(other);
+    swap(tmp);
     return *this;
+}
+
+void Cinema::swap(Cinema& other) noexcept {
+    std::swap(employees,  other.employees);
+    std::swap(numEmployees, other.numEmployees);
+    std::swap(employeesCapacity, other.employeesCapacity);
+
+    std::swap(guests, other.guests);
+    std::swap(numGuests, other.numGuests);
+    std::swap(guestsCapacity, other.guestsCapacity);
+
+    std::swap(halls, other.halls);
+    std::swap(numHalls, other.numHalls);
+    std::swap(hallsCapacity, other.hallsCapacity);
+
+    std::swap(movies, other.movies);
+    std::swap(numMovies, other.numMovies);
+    std::swap(moviesCapacity, other.moviesCapacity);
+
+    std::swap(shifts, other.shifts);
+    std::swap(numShifts, other.numShifts);
+    std::swap(shiftsCapacity, other.shiftsCapacity);
+
+    std::swap(screenings, other.screenings);
+    std::swap(numScreenings, other.numScreenings);
+    std::swap(screeningsCapacity, other.screeningsCapacity);
 }
 
 // ============================================================

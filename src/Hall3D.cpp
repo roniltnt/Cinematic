@@ -1,4 +1,4 @@
-#include "Hall3D.h"
+#include "../include/Hall3D.h"
 #include <iostream>
 #include <stdexcept>
 

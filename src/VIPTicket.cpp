@@ -1,5 +1,5 @@
-#include "VIPTicket.h"
-#include "Screening.h"
+#include "../include/VIPTicket.h"
+#include "../include/Screening.h"
 #include <iostream>
 
 // DEVIATION FROM ORIGINAL SPEC: VIP_SURCHARGE, MEAL_PRICE, calcFinalPrice() removed (Deviation 4).
